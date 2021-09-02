@@ -1,0 +1,121 @@
+** Example for how to use this API
+**** First question
+Initialize and get object
+#+begin_src python :session a :results output code
+import requests
+import json
+url = "http://localhost:5000/firstQuestion"
+payload = json.dumps({
+  "startDifficultyLevel": 2,
+  "questions": [
+    {
+      "difficulty": -3,
+      "question": "aaaaa"
+    },
+    {
+      "difficulty": -2,
+      "question": "bbb"
+    },
+    {
+      "difficulty": -1,
+      "question": "cc"
+    },
+    {
+      "difficulty": 2,
+      "question": "dd"
+    },
+    {
+      "difficulty": 3,
+      "question": "ee"
+    },
+    {
+      "difficulty": 4,
+      "question": "ff"
+    }
+  ]
+})
+headers = {
+  'Content-Type': 'application/json'
+}
+response = requests.request("POST", url, headers=headers, data=payload)
+object = response.json()["object"]
+index = response.json()["index"]
+difficulty = response.json()["difficulty"]
+# print(response.json())
+print(f"{index=}\n{difficulty=}")
+#+end_src
+#+RESULTS:
+#+begin_src python
+index=3
+difficulty=2
+#+end_src
+
+**** Next question
+Tell if i answered right or wrong on the last and see which one is next
+Right answer
+#+begin_src python :results output code :session a
+correct = True
+def next_question(correct):
+    global index, object
+    url = "http://localhost:5000/nextQuestion"
+    payload = json.dumps({
+        "correct": correct,
+        "index": index,
+        "object": object,
+        })
+    headers = {
+    'Content-Type': 'application/json'
+    }
+    response = requests.request("POST", url, headers=headers, data=payload)
+    # print(response.json())
+    object = response.json()["object"]
+    index = response.json()["index"]
+    difficulty = response.json()["difficulty"]
+    question = response.json()["question"]
+    print(f"{index=}, \n{difficulty=}, \n{question=}")
+next_question(correct)
+#+end_src
+#+RESULTS:
+#+begin_src python
+index=4,
+difficulty=3,
+question='ee'
+#+end_src
+
+Wrong answer:
+#+begin_src python :results output code :session a
+next_question(False)
+#+end_src
+#+RESULTS:
+#+begin_src python
+index=5,
+difficulty=4,
+question='ff'
+#+end_src
+
+Object
+#+begin_src python :results output code :session a
+print(object)
+#+end_src
+#+RESULTS:
+#+begin_src python
+{"py/object": "__main__.ItemResponseTheoryModel", "question_bank": [{"py/tuple": ["aaaaa", -3]}, {"py/tuple": ["bbb", -2]}, {"py/tuple": ["cc", -1]}, {"py/tuple": ["dd", 2]}, {"py/tuple": ["ee", 3]}, {"py/tuple": ["ff", 4]}], "start_difficulty": 2, "question_bank_size": 6, "indexed_items": {"py/object": "numpy.ndarray", "base": {"py/object": "numpy.ndarray", "values": "eJw7NfvGkXqr3/ZzPk2y9Hj91j5jdk08z8bP9muLKutySz/bl9xr7yt4+tk+Ot5zT2zaZ3sGMOA4AKEZoPSH/VC+A1QeSgtAaVLBB3tiaQDuVSVv", "shape": [4, 6], "dtype": "float64", "byteorder": "<"}, "strides": [8, 48], "shape": [6, 4], "dtype": "float64"}, "parameter_model": "2PL", "initializer": {"py/object": "catsim.initialization.FixedPointInitializer", "_simulator": null, "_start": 2}, "selector": {"py/object": "catsim.selection.MaxInfoSelector", "_simulator": null}, "estimator": {"py/object": "catsim.estimation.HillClimbingEstimator", "_simulator": null, "_precision": 6, "_verbose": false, "_evaluations": 22, "_calls": 2, "_dodd": false}, "stopper": {"py/object": "catsim.stopping.MaxItemStopper", "_simulator": null, "_max_itens": 6}, "est_theta": {"py/object": "numpy.float64", "dtype": "float64", "value": 2.458945128222168}, "responses": [true, false], "administered_items": [3, 4]}
+#+end_src
+
+**** Stop question
+Should I stop asking questions?
+#+begin_src python :results output code :session a
+url = "http://localhost:5000/stopQuestion"
+payload = json.dumps({
+    "object": object,
+    })
+headers = {
+  'Content-Type': 'application/json'
+}
+response = requests.request("POST", url, headers=headers, data=payload)
+print(response.json())
+#+end_src
+#+RESULTS:
+#+begin_src python
+{'stop': False, 'message': 'You should not stop asking questions.'}
+#+end_src
