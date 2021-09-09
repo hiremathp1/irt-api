@@ -114,10 +114,10 @@ def question_first():
             questionsList.append(tup)
 
         # Compute expected_index based on difficulty
-        questionsList.sort(key=lambda q: q[1])
+        sortedQuestions = sorted(questionsList, key=lambda q: q[1])
         expected_index = 0
         min_diff = None
-        for i, question in enumerate(questionsList):
+        for i, question in enumerate(sortedQuestions):
             diff = abs(start_difficulty - question[1])
             if min_diff is None:
                 min_diff = diff
@@ -125,9 +125,10 @@ def question_first():
             if diff < min_diff:
                 min_diff = diff
                 expected_index = i
+        expected_index = questionsList.index(sortedQuestions[expected_index])
 
         # Re-attempt if it choose the wrong difficulty (can eventually happen)
-        max_attempts = 5
+        max_attempts = 10
         for _ in range(max_attempts):
             var = ItemResponseTheoryModel(questionsList, start_difficulty)
             getQuestion = var.getNextQuestionIndexToAsk()
