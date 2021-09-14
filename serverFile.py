@@ -35,7 +35,10 @@ class ItemResponseTheoryModel:
             self.question_bank_size, itemtype=parameter_model
         )
         self.parameter_model = parameter_model
-        self.initializer = FixedPointInitializer(self.start_difficulty)
+        if self.start_difficulty is None:
+            self.initializer = RandomInitializer()
+        else:
+            self.initializer = FixedPointInitializer(self.start_difficulty)
         self.selector = MaxInfoSelector()
         self.estimator = HillClimbingEstimator()
         self.stopper = MaxItemStopper(self.question_bank_size)
@@ -113,27 +116,31 @@ def question_first():
             tup = (ques["question"], ques["difficulty"])
             questionsList.append(tup)
 
-        # Compute expected_index based on difficulty
-        sortedQuestions = sorted(questionsList, key=lambda q: q[1])
-        expected_index = 0
-        min_diff = None
-        for i, question in enumerate(sortedQuestions):
-            diff = abs(start_difficulty - question[1])
-            if min_diff is None:
-                min_diff = diff
-                continue
-            if diff < min_diff:
-                min_diff = diff
-                expected_index = i
-        expected_index = questionsList.index(sortedQuestions[expected_index])
-
-        # Re-attempt if it choose the wrong difficulty (can eventually happen)
-        max_attempts = 10
-        for _ in range(max_attempts):
+        if start_difficulty is None:
             var = ItemResponseTheoryModel(questionsList, start_difficulty)
             getQuestion = var.getNextQuestionIndexToAsk()
-            if getQuestion[0] == expected_index:
-                break
+        else:
+            # Compute expected_index based on difficulty
+            sortedQuestions = sorted(questionsList, key=lambda q: q[1])
+            expected_index = 0
+            min_diff = None
+            for i, question in enumerate(sortedQuestions):
+                diff = abs(start_difficulty - question[1])
+                if min_diff is None:
+                    min_diff = diff
+                    continue
+                if diff < min_diff:
+                    min_diff = diff
+                    expected_index = i
+            expected_index = questionsList.index(sortedQuestions[expected_index])
+
+            # Re-attempt if it choose the wrong difficulty (can eventually happen)
+            max_attempts = 10
+            for _ in range(max_attempts):
+                var = ItemResponseTheoryModel(questionsList, start_difficulty)
+                getQuestion = var.getNextQuestionIndexToAsk()
+                if getQuestion[0] == expected_index:
+                    break
 
 
         pickled = jsonpickle.encode(var)
@@ -210,3 +217,4 @@ def page_not_found(e):
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000, debug=False)
+
